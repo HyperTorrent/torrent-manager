@@ -64,6 +64,8 @@ export default class Torrent extends EventEmitter {
     this.complete = options.complete;
     this.verify = options.verify;
     this.dht = (options.dht !== undefined) ? options.dht : true;
+    this.dhtPort = (options.dhtPort !== undefined) ? (+options.dhtPort || 0) : 0;
+    this.lsd = (options.lsd !== undefined) ? options.lsd : true;
     this.tracker = (options.tracker !== undefined) ? options.tracker : true;
     this.trackers = options.trackers;
     this.announce = options.announce || [];
@@ -655,6 +657,8 @@ export default class Torrent extends EventEmitter {
           infoHash: parse.infoHash,
           peerId: bufferFrom(this.peerId),
           dht: (parse.private) ? false : this.dht,
+          dhtPort: this.dhtPort,
+          lsd: this.lsd,
           tracker: this.tracker,
           port: this.port,
           announce: this.trackers || this.announce.concat(parse.announce),

@@ -13,10 +13,6 @@ import { ThrottleGroup } from 'stream-throttle';
 import { name, version } from '#src/lib/package';
 import Torrent from '#src/lib/torrent';
 
-const DEFAULT_PORT = 4242;
-const DEFAULT_PATH = path.join(os.tmpdir(), name);
-const MAX_PEERS = 200;
-
 const noop = () => {};
 
 export default class Manager extends EventEmitter {
@@ -26,33 +22,51 @@ export default class Manager extends EventEmitter {
     this.debug = debug(`${name}:${this.constructor.name}`);
     this.debug('new');
 
+    const defaultTorrentOptions = typeof options.defaultTorrentOptions === 'object'
+      ? options.defaultTorrentOptions
+      : {};
+
     const versionStr = version
       .replace(/\d*./g, (v) => `0${v % 100}`.slice(-2))
       .slice(0, 4);
-    this.peerId = options.peerId || `-HT${versionStr}-`.concat(hat(48));
-    this.userAgent = `${pascalcase(name)}/${version}`;
-    this.path = options.path;
-    this.port = options.port || DEFAULT_PORT;
-    this.dht = (options.dht !== undefined) ? options.dht : true;
-    this.allowDuplicate = options.allowDuplicate !== undefined ? options.allowDuplicate : false;
+    defaultTorrentOptions.peerId = defaultTorrentOptions.peerId && defaultTorrentOptions.peerId.length === 20
+      ? defaultTorrentOptions.peerId
+      : `-HT${versionStr}-`.concat(hat(48));
+    defaultTorrentOptions.userAgent = `${pascalcase(name)}/${version}`;
+    this.defaultTorrentOptions = defaultTorrentOptions;
 
-    this.torrentPath = options.torrentPath || DEFAULT_PATH;
-    this.maxPeers = options.maxPeers || MAX_PEERS;
+    this.allowDuplicate = typeof options.allowDuplicate === 'boolean'
+      ? options.allowDuplicate
+      : false;
+    this.downloadRate = (
+      typeof options.downloadRate === 'number'
+      && options.downloadRate > 0
+     )
+      ? options.downloadRate
+      : Number.MAX_SAFE_INTEGER;
+    this.uploadRate = (
+      typeof options.uploadRate === 'number'
+      && options.uploadRate > 0
+    )
+      ? options.uploadRate
+      : Number.MAX_SAFE_INTEGER;
 
-    this.downloadRate = options.downloadRate ? options.downloadRate : Number.MAX_SAFE_INTEGER;
-    this.uploadRate = options.uploadRate ? options.uploadRate : Number.MAX_SAFE_INTEGER;
     this.downloadThrottle = new ThrottleGroup({ rate: this.downloadRate });
     this.uploadThrottle = new ThrottleGroup({ rate: this.uploadRate });
 
     this.torrents = [];
   }
 
-  get(infoHash) {
-    return this.torrents.find((torrent) => torrent.id === infoHash);
-  }
-
   get numPeers() {
     return this.torrents.reduce((acc, torrent) => acc + torrent.peers.length, 0);
+  }
+
+  get progress() {
+    return this.torrents.reduce((acc, torrent) => acc + torrent.progress, 0) / this.torrents.length;
+  }
+
+  get ratio() {
+    return this.torrents.reduce((acc, torrent) => acc + torrent.ratio, 0) / this.torrents.length;
   }
 
   async add(source, options = {}) {
@@ -68,19 +82,14 @@ export default class Manager extends EventEmitter {
       .catch(() => source)
       .then((torrentId) => {
         const torrent = new Torrent(torrentId, {
-          autostart: false,
-          peerId: this.peerId,
-          path: this.path,
-          port: this.port,
-          dht: this.dht,
-          torrentPath: this.torrentPath,
-          userAgent: this.userAgent,
+          ...this.defaultTorrentOptions,
           ...options,
+          autostart: false,
         });
 
         const exists = this.get(torrent.infoHash);
         if (exists) {
-          if (this.allowDuplicate || options.allowDuplicate) return exists;
+          if (this.allowDuplicate) return exists;
           throw new Error(`Duplicate torrent ${torrent.infoHash}`);
         }
 
@@ -107,7 +116,7 @@ export default class Manager extends EventEmitter {
     const torrent = this.get(infoHash);
 
     if (torrent !== null) {
-      return torrent.destroy()
+      return torrent.stop()
         .then(() => {
           this.torrents = this.torrents.filter((t) => t.infoHash !== infoHash);
         });
@@ -152,17 +161,8 @@ export default class Manager extends EventEmitter {
     this.torrents.forEach((torrent) => { torrent.check(); });
   }
 
-  async destroy() {
-    this.debug('destroy');
-    return pAll(this.torrents.map((torrent) => () => torrent.destroy()));
-  }
-
-  get progress() {
-    return this.torrents.reduce((acc, torrent) => acc + torrent.progress, 0) / this.torrents.length;
-  }
-
-  get ratio() {
-    return this.torrents.reduce((acc, torrent) => acc + torrent.ratio, 0) / this.torrents.length;
+  get(infoHash) {
+    return this.torrents.find((torrent) => torrent.id === infoHash);
   }
 
   setDownloadRate(rate) {
