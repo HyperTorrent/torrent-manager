@@ -3,9 +3,7 @@ import debug from 'debug';
 import fs from 'fs-extra';
 import get from 'simple-get';
 import hat from 'hat';
-import os from 'os';
 import pascalcase from 'pascalcase';
-import path from 'path';
 import pify from 'pify';
 import pAll from 'p-all';
 import pIf from 'p-if';
@@ -29,7 +27,10 @@ export default class Manager extends EventEmitter {
     const versionStr = version
       .replace(/\d*./g, (v) => `0${v % 100}`.slice(-2))
       .slice(0, 4);
-    defaultTorrentOptions.peerId = defaultTorrentOptions.peerId && defaultTorrentOptions.peerId.length === 20
+    defaultTorrentOptions.peerId = (
+      defaultTorrentOptions.peerId
+      && defaultTorrentOptions.peerId.length === 20
+    )
       ? defaultTorrentOptions.peerId
       : `-HT${versionStr}-`.concat(hat(48));
     defaultTorrentOptions.userAgent = `${pascalcase(name)}/${version}`;
@@ -41,7 +42,7 @@ export default class Manager extends EventEmitter {
     this.downloadRate = (
       typeof options.downloadRate === 'number'
       && options.downloadRate > 0
-     )
+    )
       ? options.downloadRate
       : Number.MAX_SAFE_INTEGER;
     this.uploadRate = (
