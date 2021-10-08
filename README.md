@@ -7,7 +7,7 @@ npm install @hypertorrent/torrent-manager
 
 ## Usage :
 ```javascript
-import { Manager, Torrent } from '@hypertorrent/torrent-manager';
+import { Manager, Torrent } from 'torrent-manager';
 
 // Managed
 const torrentManager = new Manager();
