@@ -2,7 +2,7 @@
 
 ## Install
 ```bash
-npm install @hypertorrent/torrent-manager
+npm install torrent-manager
 ```
 
 ## Usage :
