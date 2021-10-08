@@ -630,8 +630,8 @@ export default class Torrent extends EventEmitter {
       if (this.running || this.verify) verify();
       else pEvent(this, ['start', 'check']).then(() => { verify(); });
     };
-    const getMetdata = () => {
-      this.debug('get metdata');
+    const getaMetdata = () => {
+      this.debug('get metadata');
 
       this.destroyed = false;
 
@@ -709,7 +709,7 @@ export default class Torrent extends EventEmitter {
       this.debug('get parse');
       this.parse = this.parse || parseTorrent(source);
 
-      if (this.autostart) getMetdata();
+      if (this.autostart) getaMetdata();
     };
 
     getParse();
@@ -717,7 +717,7 @@ export default class Torrent extends EventEmitter {
     this.on('start', () => {
       if (this.destroyed) {
         this.destroyed = false;
-        getMetdata();
+        getaMetdata();
       }
     });
   }
