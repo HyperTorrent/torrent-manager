@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import debug from 'debug';
 import fs from 'fs-extra';
-import get from 'simple-get';
+import got from 'got';
 import hat from 'hat';
 import pascalcase from 'pascalcase';
 import pify from 'pify';
@@ -77,8 +77,8 @@ export default class Manager extends EventEmitter {
       .then(pIf(
         (exsist) => exsist,
         () => fs.readFile(source),
-        () => pify(get.concat, { multiArgs: true })(source)
-          .then(([, data]) => data),
+        () => got(source, { responseType: 'buffer' })
+          .then(({ body }) => body),
       ))
       .catch(() => source)
       .then((torrentId) => {
