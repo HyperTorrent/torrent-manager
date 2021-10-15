@@ -40,6 +40,27 @@ Default : `Infinity`
 
 Define upload rate (in bytes), affects all uploads managed by this manager
 
+###### retry
+Type : `object`
+Default :
+```json
+{
+  limit: 0,
+}
+```
+
+See [got retry options](https://github.com/sindresorhus/got/blob/main/documentation/7-retry.md)
+###### timeout
+Type : `object`
+Default :
+```json
+{
+  request: 5000,
+}
+```
+
+See [got timeout options](https://github.com/sindresorhus/got/blob/main/documentation/6-timeout.md)
+
 ###### defaultTorrentOptions
 Type : `object`
 Default :
@@ -68,7 +89,7 @@ Return an `array` of managed torrent
 #### Methods
 ##### add(source, options?)
 ###### source
-Type : `Torrenet hash <string> | MagnetURI <string> | File <Buffer>`
+Type : `Torrent uri <string> | Magnet uri <string> | File path <String>`
 
 ###### options
 Type : `object`
@@ -113,7 +134,10 @@ Check all managed torrents pieces
 Return a `Torrent` if exists else `undefined`
 
 ### Torrent
-#### Torrent(options?)
+#### Torrent(source, options?)
+##### source
+Type : `File content <buffer> | Magnet uri <string> | Torrent parse <object>`
+
 ##### options
 ###### peerId
 Type : `string`

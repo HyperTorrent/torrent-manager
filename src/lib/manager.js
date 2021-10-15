@@ -1,19 +1,17 @@
-import { EventEmitter } from 'events';
 import debug from 'debug';
-import fs from 'fs-extra';
+import fs, { pathExistsSync } from 'fs-extra';
 import got from 'got';
 import hat from 'hat';
+import isUri from 'is-uri';
 import pascalcase from 'pascalcase';
-import pify from 'pify';
 import pAll from 'p-all';
-import pIf from 'p-if';
 import { ThrottleGroup } from 'stream-throttle';
 import { name, version } from '#src/lib/package';
 import Torrent from '#src/lib/torrent';
 
 const noop = () => {};
 
-export default class Manager extends EventEmitter {
+export default class Manager {
   constructor(options = {}) {
     super();
 
@@ -35,6 +33,13 @@ export default class Manager extends EventEmitter {
       : `-HT${versionStr}-`.concat(hat(48));
     defaultTorrentOptions.userAgent = `${pascalcase(name)}/${version}`;
     this.defaultTorrentOptions = defaultTorrentOptions;
+
+    this.retry = typeof options.retry === 'object'
+      ? options.retry
+      : { limit: 0 };
+    this.timeout = typeof options.timeout === 'object'
+      ? options.timeout
+      : { request: 5000 };
 
     this.allowDuplicate = typeof options.allowDuplicate === 'boolean'
       ? options.allowDuplicate
@@ -73,14 +78,26 @@ export default class Manager extends EventEmitter {
   async add(source, options = {}) {
     this.debug('add');
 
-    return fs.pathExists(source)
-      .then(pIf(
-        (exsist) => exsist,
-        () => fs.readFile(source),
-        () => got(source, { responseType: 'buffer' })
-          .then(({ body }) => body),
-      ))
-      .catch(() => source)
+    const getSource = async (src) => {
+      if (path.parse(src).root !== '') return fs.readFile(src);
+
+      if (isUri(src)) {
+        const uri = new URL(src);
+        if (uri.protocol.match(/http[s]?:/)) {
+          return got(src, {
+            responseType: 'buffer',
+            retry: this.retry,
+            timeout: this.timeout,
+          })
+            .then(({ body }) => body);
+        }
+        if (uri.protocol === 'magnet:') return src;
+      }
+
+      throw new Error('Unhandled source type');
+    };
+
+    return getSource(source)
       .then((torrentId) => {
         const torrent = new Torrent(torrentId, {
           ...this.defaultTorrentOptions,
@@ -108,8 +125,7 @@ export default class Manager extends EventEmitter {
         this.torrents.push(torrent);
 
         return torrent;
-      })
-      .catch((err) => { this.emit('error', err); });
+      });
   }
 
   async remove(infoHash) {
