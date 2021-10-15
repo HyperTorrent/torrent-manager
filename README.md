@@ -142,7 +142,7 @@ Type : `File content <buffer> | Magnet uri <string> | Torrent parse <object>`
 ###### peerId
 Type : `string`
 Length :`20`
-Default: `-HTXXXX-YYYYYYYYYYYY`
+Default: `-TMXXXX-YYYYYYYYYYYY`
 `XXXX` base on version
 `YYYYYYYYYYYY` randomized
 

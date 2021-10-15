@@ -53,7 +53,7 @@ export default class Torrent extends EventEmitter {
     const versionStr = version
       .replace(/\d*./g, (v) => `0${v % 100}`.slice(-2))
       .slice(0, 4);
-    this.peerId = options.peerId || `-HT${versionStr}-`.concat(hat(48));
+    this.peerId = options.peerId || `-TM${versionStr}-`.concat(hat(48));
     this.name = options.name || name;
     this.userAgent = `${pascalcase(this.name)}/${version}`;
 
