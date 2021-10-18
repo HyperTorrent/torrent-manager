@@ -1,7 +1,7 @@
 {
   "name": "torrent-manager",
   "version": "2.0.1",
-  "description": "",
+  "description": "Bittorent client api",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
