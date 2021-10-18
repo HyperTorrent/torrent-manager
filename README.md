@@ -43,7 +43,7 @@ Define upload rate (in bytes), affects all uploads managed by this manager
 ###### retry
 Type : `object`
 Default :
-```json
+```javascript
 {
   limit: 0,
 }
@@ -53,7 +53,7 @@ See [got retry options](https://github.com/sindresorhus/got/blob/main/documentat
 ###### timeout
 Type : `object`
 Default :
-```json
+```javascript
 {
   request: 5000,
 }
