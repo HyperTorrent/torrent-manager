@@ -63,13 +63,6 @@ See [got timeout options](https://github.com/sindresorhus/got/blob/main/document
 
 ###### defaultTorrentOptions
 Type : `object`
-Default :
-```javascript
-{
-  peerId: '-HTXXXX-YYYYYYYYYYYY',
-  userAgent: 'torrent-manager/${version}'
-}
-```
 
 Define default torrent options (see [torrent options](#torrentoptions))
 
