@@ -64,7 +64,7 @@ See [got timeout options](https://github.com/sindresorhus/got/blob/main/document
 ###### defaultTorrentOptions
 Type : `object`
 
-Define default torrent options (see [torrent options](#torrentoptions))
+Define default torrent options (see [torrent options](#torrentsource-options))
 
 #### Properties
 ##### numPeers
@@ -88,7 +88,7 @@ Type : `Torrent uri <string> | Magnet uri <string> | File path <String>`
 Type : `object`
 Default: `{}`
 
-See [torrent options](#torrentoptions)
+See [torrent options](#torrentsource-options)
 
 ##### remove(torrentHash)
 ###### torrentHash
