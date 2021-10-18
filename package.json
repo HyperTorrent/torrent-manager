@@ -1,6 +1,6 @@
 {
   "name": "torrent-manager",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "",
   "main": "src/index.js",
   "type": "module",
@@ -45,5 +45,15 @@
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.24.2"
-  }
+  },
+  "keywords": [
+    "bittorrent",
+    "bittorrent client",
+    "manager",
+    "p2p",
+    "peer-to-peer",
+    "swarm",
+    "torrent",
+    "torrent manager"
+  ]
 }
