@@ -31,7 +31,6 @@
     "is-uri": "^1.2.0",
     "p-all": "^4.0.0",
     "p-event": "^4.2.0",
-    "p-if": "^3.0.0",
     "parse-torrent": "^9.1.4",
     "pascalcase": "^1.0.0",
     "peer-wire-swarm": "^0.12.2",

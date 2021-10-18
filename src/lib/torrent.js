@@ -13,7 +13,6 @@ import path from 'path';
 import Piece from 'torrent-piece';
 import pify from 'pify';
 import pAll from 'p-all';
-import pIf from 'p-if';
 import pEvent from 'p-event';
 import pws from 'peer-wire-swarm';
 import { ThrottleGroup } from 'stream-throttle';
@@ -804,9 +803,9 @@ export default class Torrent extends EventEmitter {
   async destroy() {
     this.debug('destroy');
 
-    return pIf(
-      this.destroyed === false,
-      () => pAll([
+    if (this.destroyed === true) throw new Error(`torrent already destroyed (infoHash: ${this.infoHash})`);
+
+    return pAll([
         () => { this.destroyed = true; },
         () => new Promise((resolve) => {
           if (this.discovery) this.discovery.destroy(() => { this.debug('discovery closed'); resolve(); });
@@ -827,9 +826,7 @@ export default class Torrent extends EventEmitter {
           else resolve();
         }),
       ])
-        .then(() => { this.emit('close'); }),
-      () => { throw new Error(`torrent already destroyed (infoHash: ${this.infoHash})`); },
-    )();
+        .then(() => { this.emit('close'); });
   }
 
   connect(addr) {
