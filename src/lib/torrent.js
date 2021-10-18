@@ -871,7 +871,6 @@ export default class Torrent extends EventEmitter {
     if (!this.metadata) {
       throw new Error('No metadata to save');
     }
-    this.debug('toTorrentFile', path);
     return parseTorrent.toTorrentFile(this.parse);
   }
 
