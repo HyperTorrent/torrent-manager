@@ -4,11 +4,9 @@ import bufferFrom from 'buffer-from';
 import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import debug from 'debug';
-import fs from 'fs-extra';
 import FSChunkStore from 'fs-chunk-store';
 import hat from 'hat';
 import ImmediateChunkStore from 'immediate-chunk-store';
-import os from 'os';
 import parseTorrent from 'parse-torrent';
 import pascalcase from 'pascalcase';
 import path from 'path';
@@ -79,9 +77,7 @@ export default class Torrent extends EventEmitter {
     this.verifiedPieces = 0;
     this.on('verify', () => { this.verifiedPieces += 1; });
 
-    this.path = (options.path !== undefined) ? options.path : undefined;
-    this.torrentPath = options.torrentPath || path.join(os.tmpdir(), this.name);
-    this.cache = (options.cache !== undefined) ? options.cache : true;
+    this.path = (options.path !== undefined) ? options.path : process.cwd;
 
     this.downloadRate = options.downloadRate ? options.downloadRate : Number.MAX_SAFE_INTEGER;
     this.uploadRate = options.uploadRate ? options.uploadRate : Number.MAX_SAFE_INTEGER;
@@ -113,9 +109,7 @@ export default class Torrent extends EventEmitter {
 
     const onMetadata = (parse) => {
       this.debug('got metadata');
-
-      this.parse = parse;
-      this.emit('metadata');
+      this.emit('metadata', parse);
 
       let onUpdate = () => {};
       const onDone = () => {
@@ -159,6 +153,7 @@ export default class Torrent extends EventEmitter {
 
         if (!this.selection.length) this.emit('idle');
         if (this.verifiedPieces === this.pieces.length) {
+          this.debug('complete')
           this.complete = true;
           this.discovery.complete();
           this.emit('done');
@@ -558,9 +553,7 @@ export default class Torrent extends EventEmitter {
       const storage = this.storage || FSChunkStore;
       this.store = new ImmediateChunkStore(storage(parse.pieceLength, {
         files: parse.files.map((file) => ({
-          path: this.path
-            ? path.join(this.path, file.path)
-            : path.join(this.torrentPath, parse.infoHash, file.path),
+          path: path.join(this.path, file.path),
           length: file.length,
           offset: file.offset,
         })),
@@ -631,6 +624,9 @@ export default class Torrent extends EventEmitter {
       else pEvent(this, ['start', 'check']).then(() => { verify(); });
     };
     const getaMetdata = () => {
+      this.debug('get parse');
+      this.parse = this.parse || parseTorrent(source);
+      
       this.debug('get metadata');
 
       this.destroyed = false;
@@ -639,17 +635,7 @@ export default class Torrent extends EventEmitter {
       this.swarm = pws(parse.infoHash, this.peerId, { size: this.maxPeers, speed: this.speed });
       this.swarm.listen(this.port);
 
-      if (parse.files === undefined && parse.infoBuffer === undefined) {
-        const cacheFile = path.join(this.torrentPath, parse.infoHash).concat('.torrent');
-        if (fs.pathExistsSync(cacheFile)) {
-          onMetadata({
-            ...parseTorrent(fs.readFileSync(cacheFile)),
-            announce: this.trackers || this.announce.concat(parse.announce),
-          });
-        }
-      } else {
-        onMetadata(parse);
-      }
+      if (this.metadata) onMetadata(parse);
 
       const startDiscovery = () => {
         this.debug('start discovery');
@@ -674,16 +660,11 @@ export default class Torrent extends EventEmitter {
 
         if (this.complete) this.discovery.complete();
 
-        let exchange = exchangeMetadata(parse.infoHash, parse.infoBuffer, (metadata) => {
-          if (!this.metadata) { // Doesn't include announce
-            const torrentFile = path.join(this.torrentPath, parse.infoHash).concat('.torrent');
-            if (this.cache && !fs.pathExistsSync(torrentFile)) {
-              fs.ensureDir(this.torrentPath)
-                .then(() => fs.writeFile(torrentFile, metadata))
-                .then(() => { this.debug('metadata saved'); });
-            }
-
+        let exchange = exchangeMetadata(parse.infoHash, parse.infoBuffer, (metadata) => { // Doesn't include announce
+          if (!this.metadata) {
             const parsedMetadata = parseTorrent(metadata);
+            parsedMetadata.announce = this.trackers || this.announce.concat(parse.announce);
+            this.parse = parsedMetadata
             exchange = exchangeMetadata(parse.infoHash, parsedMetadata.infoBuffer, noop);
             onMetadata(parsedMetadata);
           }
@@ -702,17 +683,11 @@ export default class Torrent extends EventEmitter {
           exchange(wire);
         });
       };
-      if (this.running) startDiscovery();
-      else this.once('start', startDiscovery);
-    };
-    const getParse = () => {
-      this.debug('get parse');
-      this.parse = this.parse || parseTorrent(source);
 
-      if (this.autostart) getaMetdata();
+      startDiscovery();
     };
 
-    getParse();
+    getaMetdata();
 
     this.on('start', () => {
       if (this.destroyed) {
@@ -886,5 +861,21 @@ export default class Torrent extends EventEmitter {
     this.uploadRate = rate;
     this.uploadThrottle.bucket.bucketSize = rate;
     this.uploadThrottle.bucket.tokensPerInterval = rate;
+  }
+
+  setPath(path) {
+    this.path = path;
+  }
+
+  toTorrentFile(path) {
+    if (!this.metadata) {
+      throw new Error('No metadata to save');
+    }
+    this.debug('toTorrentFile', path);
+    return parseTorrent.toTorrentFile(this.parse);
+  }
+
+  toMagnetURI() {
+    return parseTorrent.toMagnetURI(this.parse);
   }
 }

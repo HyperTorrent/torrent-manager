@@ -1,8 +1,9 @@
 import debug from 'debug';
-import fs, { pathExistsSync } from 'fs-extra';
+import fs from 'fs-extra';
 import got from 'got';
 import hat from 'hat';
 import isUri from 'is-uri';
+import path from 'path';
 import pascalcase from 'pascalcase';
 import pAll from 'p-all';
 import { ThrottleGroup } from 'stream-throttle';
@@ -13,8 +14,6 @@ const noop = () => {};
 
 export default class Manager {
   constructor(options = {}) {
-    super();
-
     this.debug = debug(`${name}:${this.constructor.name}`);
     this.debug('new');
 
@@ -120,7 +119,12 @@ export default class Manager {
           wire.pipe(uploadThrottle);
         });
 
-        if (options.autostart !== false) torrent.start();
+        if (
+          options.autostart === true
+          || this.defaultTorrentOptions.autostart !== false
+        ) {
+          torrent.start();
+        }
 
         this.torrents.push(torrent);
 

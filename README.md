@@ -228,21 +228,9 @@ Define the length of buffer for speed measurement (in seconds)
 
 ###### path
 Type : `string`
-Default : `${torrentPath}/${infoHash}`
+Default : `current directory`
 
 Set download path
-
-###### torrentPath
-Type : `string`
-Default : `${tmpdir}/torrent-manager`
-
-Set download path
-
-###### cache
-Type : `boolean`
-Default : `true`
-
-Save metadata to torrent file named `${infoHash}.torrent` in `${torrentPath}`
 
 ###### downloadRate
 Type : `number`
@@ -379,3 +367,15 @@ Set download max speed to `rate` (in bytes)
 Type : `number`
 
 Set upload max speed to `rate` (in bytes)
+
+#### setPath(path)
+##### path
+Type : `string`
+
+Set download path
+
+#### toTorrentFile
+Return `buffer` of torrent metadata
+
+#### toMagnetURI
+Return magnet uri based on metadata
