@@ -13,7 +13,7 @@ import path from 'path';
 import Piece from 'torrent-piece';
 import pify from 'pify';
 import pAll from 'p-all';
-import pEvent from 'p-event';
+import { pEvent } from 'p-event';
 import pws from 'peer-wire-swarm';
 import { ThrottleGroup } from 'stream-throttle';
 import { name, version } from '#src/lib/package';
