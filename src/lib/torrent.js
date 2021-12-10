@@ -860,8 +860,18 @@ export default class Torrent extends EventEmitter {
     this.uploadThrottle.bucket.tokensPerInterval = rate;
   }
 
-  setPath(path) {
-    this.path = path;
+  setPath(targetPath) {
+    this.path = targetPath;
+    if (this.metadata) {
+      const storage = this.storage || FSChunkStore;
+      this.store = new ImmediateChunkStore(storage(this.parse.pieceLength, {
+        files: this.parse.files.map((file) => ({
+          path: path.join(this.path, file.path),
+          length: file.length,
+          offset: file.offset,
+        })),
+      }));
+    }
   }
 
   toTorrentFile(path) {
