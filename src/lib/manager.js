@@ -121,7 +121,10 @@ export default class Manager {
 
         if (
           options.autostart === true
-          || this.defaultTorrentOptions.autostart !== false
+          || (
+            options.autostart === undefined
+            && this.defaultTorrentOptions.autostart !== false
+          )
         ) {
           torrent.start();
         }
