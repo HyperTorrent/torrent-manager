@@ -152,7 +152,7 @@ export default class Torrent extends EventEmitter {
 
         if (!this.selection.length) this.emit('idle');
         if (this.verifiedPieces === this.pieces.length) {
-          this.debug('complete')
+          this.debug('complete');
           this.complete = true;
           this.discovery.complete();
           this.emit('done');
@@ -625,7 +625,7 @@ export default class Torrent extends EventEmitter {
     const getaMetdata = () => {
       this.debug('get parse');
       this.parse = this.parse || parseTorrent(source);
-      
+
       this.debug('get metadata');
 
       this.destroyed = false;
@@ -659,11 +659,12 @@ export default class Torrent extends EventEmitter {
 
         if (this.complete) this.discovery.complete();
 
-        let exchange = exchangeMetadata(parse.infoHash, parse.infoBuffer, (metadata) => { // Doesn't include announce
+        let exchange = exchangeMetadata(parse.infoHash, parse.infoBuffer, (metadata) => {
+          // Doesn't include announce
           if (!this.metadata) {
             const parsedMetadata = parseTorrent(metadata);
             parsedMetadata.announce = this.trackers || this.announce.concat(parse.announce);
-            this.parse = parsedMetadata
+            this.parse = parsedMetadata;
             exchange = exchangeMetadata(parse.infoHash, parsedMetadata.infoBuffer, noop);
             onMetadata(parsedMetadata);
           }
@@ -806,27 +807,27 @@ export default class Torrent extends EventEmitter {
     if (this.destroyed === true) throw new Error(`torrent already destroyed (infoHash: ${this.infoHash})`);
 
     return pAll([
-        () => { this.destroyed = true; },
-        () => new Promise((resolve) => {
-          if (this.discovery) this.discovery.destroy(() => { this.debug('discovery closed'); resolve(); });
-          else resolve();
-        }),
-        () => new Promise((resolve) => {
-          if (this.swarm) {
-            clearInterval(this.rechokeIntervalId);
-            this.swarm.pause();
-            this.swarm.destroy();
-            this.swarm.on('close', () => { this.debug('swarm closed'); resolve(); });
-            this.wires.forEach((wire) => { wire.destroy(); });
-            this.swarm.connections.forEach((connection) => { connection.destroy(); });
-          } else resolve();
-        }),
-        () => new Promise((resolve) => {
-          if (this.store) this.store.close(() => { this.debug('store closed'); resolve(); });
-          else resolve();
-        }),
-      ])
-        .then(() => { this.emit('close'); });
+      () => { this.destroyed = true; },
+      () => new Promise((resolve) => {
+        if (this.discovery) this.discovery.destroy(() => { this.debug('discovery closed'); resolve(); });
+        else resolve();
+      }),
+      () => new Promise((resolve) => {
+        if (this.swarm) {
+          clearInterval(this.rechokeIntervalId);
+          this.swarm.pause();
+          this.swarm.destroy();
+          this.swarm.on('close', () => { this.debug('swarm closed'); resolve(); });
+          this.wires.forEach((wire) => { wire.destroy(); });
+          this.swarm.connections.forEach((connection) => { connection.destroy(); });
+        } else resolve();
+      }),
+      () => new Promise((resolve) => {
+        if (this.store) this.store.close(() => { this.debug('store closed'); resolve(); });
+        else resolve();
+      }),
+    ])
+      .then(() => { this.emit('close'); });
   }
 
   connect(addr) {
@@ -874,7 +875,7 @@ export default class Torrent extends EventEmitter {
     }
   }
 
-  toTorrentFile(path) {
+  toTorrentFile() {
     if (!this.metadata) {
       throw new Error('No metadata to save');
     }
