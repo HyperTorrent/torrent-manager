@@ -689,6 +689,7 @@ export default class Torrent extends EventEmitter {
     };
 
     getParse();
+    getMetadata();
 
     this.on('start', () => {
       if (this.destroyed) {
