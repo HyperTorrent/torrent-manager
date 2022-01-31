@@ -6,6 +6,7 @@ import isUri from 'is-uri';
 import path from 'path';
 import pascalcase from 'pascalcase';
 import pAll from 'p-all';
+import parseTorrent from 'parse-torrent';
 import { ThrottleGroup } from 'stream-throttle';
 import { name, version } from '#src/lib/package';
 import Torrent from '#src/lib/torrent';
@@ -96,19 +97,22 @@ export default class Manager {
       throw new Error('Unhandled source type');
     };
 
+    const getParse = async (data) => parseTorrent(data);
+
     return getSource(source)
-      .then((torrentId) => {
-        const torrent = new Torrent(torrentId, {
+      .then(getParse)
+      .then((torrentParse) => {
+        const exists = this.get(torrentParse.infoHash);
+        if (exists) {
+          if (this.allowDuplicate) return exists;
+          throw new Error(`Duplicate torrent ${torrentParse.infoHash}`);
+        }
+
+        const torrent = new Torrent(torrentParse, {
           ...this.defaultTorrentOptions,
           ...options,
           autostart: false,
         });
-
-        const exists = this.get(torrent.infoHash);
-        if (exists) {
-          if (this.allowDuplicate) return exists;
-          throw new Error(`Duplicate torrent ${torrent.infoHash}`);
-        }
 
         torrent.on('wire', (wire, connection) => {
           const downloadLimit = connection.pipe(this.downloadThrottle.throttle());

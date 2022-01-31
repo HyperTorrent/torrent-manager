@@ -622,10 +622,11 @@ export default class Torrent extends EventEmitter {
       if (this.running || this.verify) verify();
       else pEvent(this, ['start', 'check']).then(() => { verify(); });
     };
-    const getaMetdata = () => {
+    const getParse = () => {
       this.debug('get parse');
       this.parse = this.parse || parseTorrent(source);
-
+    };
+    const getMetadata = () => {
       this.debug('get metadata');
 
       this.destroyed = false;
@@ -687,12 +688,12 @@ export default class Torrent extends EventEmitter {
       startDiscovery();
     };
 
-    getaMetdata();
+    getParse();
 
     this.on('start', () => {
       if (this.destroyed) {
         this.destroyed = false;
-        getaMetdata();
+        getMetadata();
       }
     });
   }
@@ -787,18 +788,26 @@ export default class Torrent extends EventEmitter {
     this.debug('start');
 
     return new Promise((resolve) => {
-      this.running = true;
-      this.emit('start');
-      if (this.ready) resolve();
-      else this.once('ready', resolve);
+      if (this.running === false) {
+        this.running = true;
+        this.emit('start');
+        if (this.ready) resolve();
+        else this.once('ready', resolve);
+      } else {
+        resolve();
+      }
     });
   }
 
   async stop() {
     this.debug('stop');
-    this.running = false;
-    return this.destroy()
-      .then(() => { this.emit('stop'); });
+
+    if (this.running) {
+      this.running = false;
+      return this.destroy()
+        .then(() => { this.emit('stop'); });
+    }
+    return Promise.resolve();
   }
 
   async destroy() {
