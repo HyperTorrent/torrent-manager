@@ -558,7 +558,7 @@ export default class Torrent extends EventEmitter {
         })),
       }));
       // eslint-disable-next-line new-cap
-      if (!this.bitfield) this.bitfield = new Bitfield.default(parse.pieces.length);
+      if (!this.bitfield) this.bitfield = new Bitfield(parse.pieces.length);
 
       const { pieceLength, lastPieceLength } = parse;
       this.pieces = parse.pieces.map(

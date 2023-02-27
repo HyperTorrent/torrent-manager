@@ -18,7 +18,7 @@
     "./torrent": "./src/lib/torrent.js"
   },
   "dependencies": {
-    "bitfield": "^4.0.0",
+    "bitfield": "^4.1.0",
     "bncode": "^0.5.3",
     "buffer-from": "^1.1.2",
     "debug": "^4.3.3",
